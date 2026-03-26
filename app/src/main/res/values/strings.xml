@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Muninn-Weather</string>
+    <string name="setup_title">Home Assistant Setup</string>
+    <string name="ha_url_hint">Home Assistant URL (https://...)</string>
+    <string name="ha_key_hint">Home Assistant API key</string>
+    <string name="save">Save</string>
+    <string name="recent_packets">Recent Weather Packets</string>
+    <string name="refresh">Refresh</string>
+    <string name="missing_config">Please enter a URL and API key.</string>
+    <string name="https_required">HTTPS URL required.</string>
+</resources>

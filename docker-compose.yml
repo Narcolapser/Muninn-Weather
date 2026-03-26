@@ -1,0 +1,12 @@
+services:
+  android-build:
+    build: .
+    platform: linux/amd64
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - gradle-cache:/root/.gradle
+    command: ["gradle", "-Pandroid.aapt2FromMavenOverride=/opt/android-sdk/build-tools/34.0.0/aapt2", "assembleDebug"]
+
+volumes:
+  gradle-cache:
