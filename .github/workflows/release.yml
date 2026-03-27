@@ -51,13 +51,13 @@ jobs:
           commits=$(git log --pretty=format:%s%n%b $commit_range)
 
           bump="patch"
-          if echo "$commits" | grep -q "BREAKING CHANGE"; then
+          if echo "$commits" | grep -qi "BREAKING CHANGE"; then
             bump="major"
-          elif echo "$commits" | grep -Eq "^[a-zA-Z]+(\([^)]*\))?!:"; then
+          elif echo "$commits" | grep -Eqi "^[a-zA-Z]+(\([^)]*\))?!:"; then
             bump="major"
-          elif echo "$commits" | grep -Eq "^feat(\([^)]*\))?:"; then
+          elif echo "$commits" | grep -Eqi "^feat(\([^)]*\))?:"; then
             bump="minor"
-          elif echo "$commits" | grep -Eq "^fix(\([^)]*\))?:"; then
+          elif echo "$commits" | grep -Eqi "^fix(\([^)]*\))?:"; then
             bump="patch"
           fi
 
@@ -84,9 +84,12 @@ jobs:
           next_version="${major}.${minor}.${patch}"
           next_tag="v${next_version}"
 
+          version_code=$(git rev-list --count HEAD)
+
           echo "next_version=${next_version}" >> "$GITHUB_OUTPUT"
           echo "next_tag=${next_tag}" >> "$GITHUB_OUTPUT"
           echo "previous_tag=${latest_tag}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${version_code}" >> "$GITHUB_OUTPUT"
 
       - name: Decode keystore
         shell: bash
@@ -114,7 +117,10 @@ jobs:
             -e KEY_ALIAS \
             -e KEY_PASSWORD \
             android-build \
-            gradle -Pandroid.aapt2FromMavenOverride=/opt/android-sdk/build-tools/34.0.0/aapt2 assembleRelease
+            gradle -Pandroid.aapt2FromMavenOverride=/opt/android-sdk/build-tools/34.0.0/aapt2 \
+            -PVERSION_NAME=${{ steps.version.outputs.next_version }} \
+            -PVERSION_CODE=${{ steps.version.outputs.version_code }} \
+            assembleRelease
 
       - name: Remove keystore
         if: always()

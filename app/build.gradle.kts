@@ -11,8 +11,10 @@ android {
         applicationId = "com.studiosleepygiraffe.muninnweather"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        val versionNameProp = project.findProperty("VERSION_NAME") as String?
+        val versionCodeProp = project.findProperty("VERSION_CODE") as String?
+        versionCode = versionCodeProp?.toIntOrNull() ?: 1
+        versionName = versionNameProp ?: "1.0"
     }
 
     val keystorePath = System.getenv("KEYSTORE_PATH")
