@@ -17,7 +17,8 @@ class WeatherWorker(
     override suspend fun doWork(): Result {
         val storage = WeatherStorage(applicationContext)
         val config = storage.getConfig() ?: return Result.retry()
-        val packet = HaClient().fetchPacket(config, ENTITY_ID) ?: return Result.retry()
+        val entityId = storage.getEntityId() ?: return Result.retry()
+        val packet = HaClient().fetchPacket(config, entityId) ?: return Result.retry()
 
         storage.appendPacket(packet)
         sendToGadgetbridge(packet)
@@ -65,7 +66,6 @@ class WeatherWorker(
 
     companion object {
         private const val TAG = "MuninnWeather"
-        private const val ENTITY_ID = "sensor.roof_top_weather_station_temperature"
         private const val ACTION_GADGETBRIDGE_WEATHER = "nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER"
         private const val GADGETBRIDGE_PACKAGE = "nodomain.freeyourgadget.gadgetbridge"
         private const val EXTRA_WEATHER_JSON = "WeatherJson"

@@ -1,10 +1,21 @@
 <resources>
     <string name="app_name">Muninn-Weather</string>
     <string name="setup_title">Home Assistant Setup</string>
+    <string name="home_title">Muninn-Weather</string>
+    <string name="configure_ha">Configure Home Assistant</string>
+    <string name="config_status">Configured sensor: %1$s</string>
+    <string name="config_missing">No sensor selected yet.</string>
     <string name="ha_url_label">Home Assistant URL</string>
     <string name="ha_url_hint">Home Assistant URL (https://...)</string>
     <string name="ha_key_label">Home Assistant API key</string>
     <string name="ha_key_hint">Home Assistant API key</string>
+    <string name="continue_label">Continue</string>
+    <string name="select_sensor_title">Select Sensor</string>
+    <string name="sensor_filter_hint">Filter sensors</string>
+    <string name="use_sensor">Use Selected Sensor</string>
+    <string name="loading_sensors">Loading sensors…</string>
+    <string name="sensor_required">Select a sensor to continue.</string>
+    <string name="config_failed">Could not load sensors. Check URL and token.</string>
     <string name="save">Save</string>
     <string name="recent_packets">Recent Weather Packets</string>
     <string name="refresh">Refresh</string>

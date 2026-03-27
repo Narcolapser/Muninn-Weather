@@ -4,15 +4,21 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.studiosleepygiraffe.muninnweather.data.WeatherStorage
 import com.studiosleepygiraffe.muninnweather.databinding.ActivityMainBinding
+import com.studiosleepygiraffe.muninnweather.network.HaClient
 import com.studiosleepygiraffe.muninnweather.worker.WorkerScheduler
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var storage: WeatherStorage
     private lateinit var adapter: PacketAdapter
+    private lateinit var sensorAdapter: SensorAdapter
+    private var selectedSensor: HaClient.HaSensor? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,11 +27,23 @@ class MainActivity : AppCompatActivity() {
 
         storage = WeatherStorage(this)
         adapter = PacketAdapter()
+        sensorAdapter = SensorAdapter { sensor ->
+            selectedSensor = sensor
+            binding.useSensorButton.isEnabled = true
+        }
 
         binding.packetList.layoutManager = LinearLayoutManager(this)
         binding.packetList.adapter = adapter
 
-        binding.saveButton.setOnClickListener {
+        binding.sensorList.layoutManager = LinearLayoutManager(this)
+        binding.sensorList.adapter = sensorAdapter
+
+        binding.configureButton.setOnClickListener {
+            prefillConfig()
+            showConfig()
+        }
+
+        binding.continueButton.setOnClickListener {
             val rawUrl = binding.haUrlInput.text?.toString()?.trim().orEmpty()
             val token = binding.haKeyInput.text?.toString()?.trim().orEmpty()
 
@@ -34,16 +52,27 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (!rawUrl.startsWith("https://")) {
-                Toast.makeText(this, getString(R.string.https_required), Toast.LENGTH_LONG).show()
+            val url = rawUrl.trimEnd('/')
+            storage.saveConfig(url, token)
+            loadSensors()
+        }
+
+        binding.sensorFilterInput.addTextChangedListener { text ->
+            sensorAdapter.applyFilter(text?.toString().orEmpty())
+        }
+
+        binding.useSensorButton.setOnClickListener {
+            val chosen = selectedSensor
+            if (chosen == null) {
+                Toast.makeText(this, getString(R.string.sensor_required), Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
-            val url = rawUrl.trimEnd('/')
-            storage.saveConfig(url, token)
+            storage.saveEntityId(chosen.entityId)
+            updateConfigStatus()
             WorkerScheduler.schedulePeriodic(this)
             WorkerScheduler.enqueueOneTime(this)
-            showList()
+            showHome()
             refreshPackets()
         }
 
@@ -52,17 +81,14 @@ class MainActivity : AppCompatActivity() {
             refreshPackets()
         }
 
-        if (storage.hasConfig()) {
-            showList()
-            refreshPackets()
-        } else {
-            showConfig()
-        }
+        showHome()
+        updateConfigStatus()
+        refreshPackets()
     }
 
     override fun onResume() {
         super.onResume()
-        if (storage.hasConfig()) {
+        if (storage.hasFullConfig()) {
             refreshPackets()
         }
     }
@@ -71,13 +97,60 @@ class MainActivity : AppCompatActivity() {
         adapter.submitList(storage.getPackets())
     }
 
-    private fun showList() {
+    private fun showHome() {
+        binding.homeContainer.visibility = View.VISIBLE
         binding.configContainer.visibility = View.GONE
-        binding.listContainer.visibility = View.VISIBLE
+        binding.sensorContainer.visibility = View.GONE
     }
 
     private fun showConfig() {
+        binding.homeContainer.visibility = View.GONE
         binding.configContainer.visibility = View.VISIBLE
-        binding.listContainer.visibility = View.GONE
+        binding.sensorContainer.visibility = View.GONE
+    }
+
+    private fun showSensors() {
+        binding.homeContainer.visibility = View.GONE
+        binding.configContainer.visibility = View.GONE
+        binding.sensorContainer.visibility = View.VISIBLE
+    }
+
+    private fun prefillConfig() {
+        val config = storage.getConfig()
+        binding.haUrlInput.setText(config?.url.orEmpty())
+        binding.haKeyInput.setText(config?.token.orEmpty())
+    }
+
+    private fun updateConfigStatus() {
+        val entity = storage.getEntityId()
+        if (entity.isNullOrBlank()) {
+            binding.configStatusText.text = getString(R.string.config_missing)
+        } else {
+            binding.configStatusText.text = getString(R.string.config_status, entity)
+        }
+    }
+
+    private fun loadSensors() {
+        selectedSensor = null
+        binding.useSensorButton.isEnabled = false
+        binding.useSensorButton.text = getString(R.string.loading_sensors)
+
+        val config = storage.getConfig()
+        if (config == null) {
+            Toast.makeText(this, getString(R.string.missing_config), Toast.LENGTH_LONG).show()
+            return
+        }
+
+        lifecycleScope.launch {
+            val sensors = HaClient().fetchSensors(config)
+            if (sensors.isEmpty()) {
+                Toast.makeText(this@MainActivity, getString(R.string.config_failed), Toast.LENGTH_LONG).show()
+                binding.useSensorButton.text = getString(R.string.use_sensor)
+                return@launch
+            }
+            sensorAdapter.submitList(sensors)
+            binding.useSensorButton.text = getString(R.string.use_sensor)
+            showSensors()
+        }
     }
 }

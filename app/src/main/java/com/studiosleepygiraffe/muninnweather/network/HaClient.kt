@@ -37,4 +37,36 @@ class HaClient {
             }
         }
     }
+
+    suspend fun fetchSensors(config: WeatherStorage.HaConfig): List<HaSensor> {
+        return withContext(Dispatchers.IO) {
+            val url = "${config.url}/api/states"
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer ${config.token}")
+                .addHeader("Accept", "application/json")
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext emptyList()
+                val body = response.body?.string() ?: return@withContext emptyList()
+                val array = org.json.JSONArray(body)
+                val items = mutableListOf<HaSensor>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    val entityId = obj.optString("entity_id", "")
+                    if (!entityId.startsWith("sensor.")) continue
+                    val name = obj.optJSONObject("attributes")
+                        ?.optString("friendly_name", entityId)
+                        ?.trim()
+                        ?.ifBlank { entityId }
+                        ?: entityId
+                    items.add(HaSensor(entityId, name))
+                }
+                items
+            }
+        }
+    }
+
+    data class HaSensor(val entityId: String, val name: String)
 }

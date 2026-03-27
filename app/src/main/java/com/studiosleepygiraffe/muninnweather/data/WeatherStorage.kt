@@ -24,6 +24,8 @@ class WeatherStorage(context: Context) {
 
     fun hasConfig(): Boolean = prefs.contains(KEY_HA_URL) && prefs.contains(KEY_HA_TOKEN)
 
+    fun hasFullConfig(): Boolean = hasConfig() && prefs.contains(KEY_ENTITY_ID)
+
     fun saveConfig(url: String, token: String) {
         prefs.edit()
             .putString(KEY_HA_URL, url)
@@ -37,6 +39,14 @@ class WeatherStorage(context: Context) {
         if (url.isNullOrBlank() || token.isNullOrBlank()) return null
         return HaConfig(url, token)
     }
+
+    fun saveEntityId(entityId: String) {
+        prefs.edit()
+            .putString(KEY_ENTITY_ID, entityId)
+            .apply()
+    }
+
+    fun getEntityId(): String? = prefs.getString(KEY_ENTITY_ID, null)
 
     fun appendPacket(packet: WeatherPacket) {
         val packets = getPackets().toMutableList()
@@ -76,6 +86,7 @@ class WeatherStorage(context: Context) {
         private const val PREFS_NAME = "muninn_weather_prefs"
         private const val KEY_HA_URL = "ha_url"
         private const val KEY_HA_TOKEN = "ha_token"
+        private const val KEY_ENTITY_ID = "entity_id"
         private const val KEY_PACKETS = "weather_packets"
         private const val MAX_PACKETS = 20
     }
