@@ -94,6 +94,12 @@ jobs:
           set -euo pipefail
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
+      - name: Clear Docker auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f ~/.docker/config.json
+
       - name: Build signed release APK in Docker
         env:
           KEYSTORE_PATH: /workspace/keystore.jks
