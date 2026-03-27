@@ -54,15 +54,14 @@ class WeatherWorker(
         applicationContext.sendBroadcast(fallbackIntent)
     }
 
-    private fun toKelvin(value: Double, unit: String): Double {
+    private fun toKelvin(value: Double, unit: String): int {
         val normalized = unit.trim().lowercase()
         val celsius = when {
             normalized.contains("f") -> (value - 32.0) * 5.0 / 9.0
             normalized.contains("c") -> value
             else -> value
         }
-        val kelvin = celsius + 273.15
-        return kotlin.math.round(kelvin * 10.0) / 10.0
+        return kotlin.math.round(celsius + 273.15).toInt()
     }
 
     companion object {
