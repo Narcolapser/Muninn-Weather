@@ -34,7 +34,7 @@ jobs:
           git fetch --tags --force
 
           latest_tag=""
-          if git rev-parse --verify --quiet refs/tags/* >/dev/null; then
+          if [[ -n "$(git tag -l)" ]]; then
             latest_tag=$(git describe --tags --abbrev=0)
           fi
 
@@ -90,6 +90,16 @@ jobs:
           echo "next_tag=${next_tag}" >> "$GITHUB_OUTPUT"
           echo "previous_tag=${latest_tag}" >> "$GITHUB_OUTPUT"
           echo "version_code=${version_code}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        if: ${{ steps.version.outputs.next_tag != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.version.outputs.next_tag }}"
+          git push origin "${{ steps.version.outputs.next_tag }}"
 
       - name: Decode keystore
         shell: bash
