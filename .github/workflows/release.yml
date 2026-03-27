@@ -116,6 +116,13 @@ jobs:
             android-build \
             gradle -Pandroid.aapt2FromMavenOverride=/opt/android-sdk/build-tools/34.0.0/aapt2 assembleRelease
 
+      - name: Remove keystore
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f keystore.jks
+
       - name: Prepare APK and checksum
         id: apk
         shell: bash
