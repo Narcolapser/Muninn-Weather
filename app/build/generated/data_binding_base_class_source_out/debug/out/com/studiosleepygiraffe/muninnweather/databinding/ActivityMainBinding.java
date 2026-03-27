@@ -5,13 +5,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
+import com.google.android.material.textfield.TextInputEditText;
 import com.studiosleepygiraffe.muninnweather.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -25,10 +25,10 @@ public final class ActivityMainBinding implements ViewBinding {
   public final LinearLayout configContainer;
 
   @NonNull
-  public final EditText haKeyInput;
+  public final TextInputEditText haKeyInput;
 
   @NonNull
-  public final EditText haUrlInput;
+  public final TextInputEditText haUrlInput;
 
   @NonNull
   public final LinearLayout listContainer;
@@ -46,7 +46,7 @@ public final class ActivityMainBinding implements ViewBinding {
   public final Button saveButton;
 
   private ActivityMainBinding(@NonNull LinearLayout rootView, @NonNull LinearLayout configContainer,
-      @NonNull EditText haKeyInput, @NonNull EditText haUrlInput,
+      @NonNull TextInputEditText haKeyInput, @NonNull TextInputEditText haUrlInput,
       @NonNull LinearLayout listContainer, @NonNull RecyclerView packetList,
       @NonNull Button refreshButton, @NonNull LinearLayout root, @NonNull Button saveButton) {
     this.rootView = rootView;
@@ -94,13 +94,13 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       id = R.id.ha_key_input;
-      EditText haKeyInput = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText haKeyInput = ViewBindings.findChildViewById(rootView, id);
       if (haKeyInput == null) {
         break missingId;
       }
 
       id = R.id.ha_url_input;
-      EditText haUrlInput = ViewBindings.findChildViewById(rootView, id);
+      TextInputEditText haUrlInput = ViewBindings.findChildViewById(rootView, id);
       if (haUrlInput == null) {
         break missingId;
       }

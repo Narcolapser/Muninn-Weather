@@ -2084,6 +2084,10 @@ color mtrl_textinput_focused_box_stroke_color
 color mtrl_textinput_hovered_box_stroke_color
 color notification_action_color_filter
 color notification_icon_bg_color
+color panel_bg
+color panel_border
+color pill_bg
+color pill_border
 color primary_dark_material_dark
 color primary_dark_material_light
 color primary_material_dark
@@ -2994,6 +2998,8 @@ drawable abc_textfield_search_material
 drawable abc_vector_test
 drawable avd_hide_password
 drawable avd_show_password
+drawable bg_panel
+drawable bg_pill
 drawable btn_checkbox_checked_mtrl
 drawable btn_checkbox_checked_to_unchecked_mtrl_animation
 drawable btn_checkbox_unchecked_mtrl
@@ -3863,7 +3869,9 @@ string exposed_dropdown_menu_content_description
 string fab_transformation_scrim_behavior
 string fab_transformation_sheet_behavior
 string ha_key_hint
+string ha_key_label
 string ha_url_hint
+string ha_url_label
 string hide_bottom_view_on_scroll_behavior
 string https_required
 string icon_content_description
@@ -3975,6 +3983,7 @@ string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
 string recent_packets
+string recorded_at
 string refresh
 string save
 string search_menu_title

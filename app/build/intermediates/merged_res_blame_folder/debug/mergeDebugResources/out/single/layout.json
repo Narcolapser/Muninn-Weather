@@ -6,5 +6,13 @@
     {
         "merged": "com.studiosleepygiraffe.muninnweather.app-mergeDebugResources-39:/layout/item_packet.xml",
         "source": "com.studiosleepygiraffe.muninnweather.app-main-42:/layout/item_packet.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.7/com.studiosleepygiraffe.muninnweather.app-mergeDebugResources-39:/layout/item_packet.xml",
+        "source": "/root/.gradle/daemon/8.7/com.studiosleepygiraffe.muninnweather.app-main-42:/layout/item_packet.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.7/com.studiosleepygiraffe.muninnweather.app-mergeDebugResources-39:/layout/activity_main.xml",
+        "source": "/root/.gradle/daemon/8.7/com.studiosleepygiraffe.muninnweather.app-main-42:/layout/activity_main.xml"
     }
 ]

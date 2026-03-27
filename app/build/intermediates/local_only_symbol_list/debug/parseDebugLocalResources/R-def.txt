@@ -1,10 +1,16 @@
 R_DEF: Internal format may change without notice
 local
 color black
+color panel_bg
+color panel_border
+color pill_bg
+color pill_border
 color purple_500
 color purple_700
 color teal_200
 color white
+drawable bg_panel
+drawable bg_pill
 drawable ic_launcher
 id config_container
 id ha_key_input
@@ -20,10 +26,13 @@ layout activity_main
 layout item_packet
 string app_name
 string ha_key_hint
+string ha_key_label
 string ha_url_hint
+string ha_url_label
 string https_required
 string missing_config
 string recent_packets
+string recorded_at
 string refresh
 string save
 string setup_title
