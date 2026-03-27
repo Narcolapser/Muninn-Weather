@@ -2,6 +2,7 @@ package com.studiosleepygiraffe.muninnweather.worker
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.studiosleepygiraffe.muninnweather.data.WeatherStorage
@@ -28,15 +29,28 @@ class WeatherWorker(
         payload.put("timestamp", packet.timestampMillis / 1000)
         payload.put("temperature", packet.temperature)
         payload.put("temperatureUnit", packet.unit)
+        val payloadString = payload.toString()
 
-        val intent = Intent(ACTION_GADGETBRIDGE_WEATHER)
-        intent.setPackage(GADGETBRIDGE_PACKAGE)
-        intent.putExtra(EXTRA_WEATHER_JSON, payload.toString())
-        intent.putExtra(EXTRA_WEATHER_JSON_LEGACY, payload.toString())
+        Log.i(TAG, "Sending weather broadcast: $payloadString")
+
+        val intent = Intent(ACTION_GADGETBRIDGE_WEATHER).apply {
+            setPackage(GADGETBRIDGE_PACKAGE)
+            addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+            putExtra(EXTRA_WEATHER_JSON, payloadString)
+            putExtra(EXTRA_WEATHER_JSON_LEGACY, payloadString)
+        }
         applicationContext.sendBroadcast(intent)
+
+        val fallbackIntent = Intent(ACTION_GADGETBRIDGE_WEATHER).apply {
+            addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+            putExtra(EXTRA_WEATHER_JSON, payloadString)
+            putExtra(EXTRA_WEATHER_JSON_LEGACY, payloadString)
+        }
+        applicationContext.sendBroadcast(fallbackIntent)
     }
 
     companion object {
+        private const val TAG = "MuninnWeather"
         private const val ENTITY_ID = "sensor.roof_top_weather_station_temperature"
         private const val ACTION_GADGETBRIDGE_WEATHER = "nodomain.freeyourgadget.gadgetbridge.action.WEATHER"
         private const val GADGETBRIDGE_PACKAGE = "nodomain.freeyourgadget.gadgetbridge"

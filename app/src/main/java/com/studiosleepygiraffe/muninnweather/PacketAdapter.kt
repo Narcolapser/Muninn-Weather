@@ -33,7 +33,11 @@ class PacketAdapter : RecyclerView.Adapter<PacketAdapter.PacketViewHolder>() {
     inner class PacketViewHolder(private val binding: ItemPacketBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(packet: WeatherPacket) {
             val date = Date(packet.timestampMillis)
-            binding.packetTime.text = formatter.format(date)
+            val formatted = formatter.format(date)
+            binding.packetTime.text = binding.root.context.getString(
+                R.string.recorded_at,
+                formatted
+            )
             binding.packetTemp.text = String.format(Locale.US, "%.1f %s", packet.temperature, packet.unit)
         }
     }
