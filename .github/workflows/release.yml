@@ -88,22 +88,51 @@ jobs:
           echo "next_tag=${next_tag}" >> "$GITHUB_OUTPUT"
           echo "previous_tag=${latest_tag}" >> "$GITHUB_OUTPUT"
 
-      - name: Build APK in Docker
+      - name: Decode keystore
+        shell: bash
         run: |
           set -euo pipefail
-          docker compose run --rm android-build
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
 
-      - name: Locate APK
+      - name: Build signed release APK in Docker
+        env:
+          KEYSTORE_PATH: /workspace/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          docker compose run --rm \
+            -e KEYSTORE_PATH \
+            -e KEYSTORE_PASSWORD \
+            -e KEY_ALIAS \
+            -e KEY_PASSWORD \
+            android-build \
+            gradle -Pandroid.aapt2FromMavenOverride=/opt/android-sdk/build-tools/34.0.0/aapt2 assembleRelease
+
+      - name: Prepare APK and checksum
         id: apk
         shell: bash
         run: |
           set -euo pipefail
-          apk_path=$(find app/build/outputs/apk -type f -name "*.apk" | head -n 1 || true)
+          apk_path=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -n 1 || true)
           if [[ -z "$apk_path" ]]; then
             echo "APK not found in app/build/outputs/apk" >&2
             exit 1
           fi
-          echo "apk_path=${apk_path}" >> "$GITHUB_OUTPUT"
+          mkdir -p dist
+          cp "$apk_path" "dist/Muninn-Weather.apk"
+          md5sum "dist/Muninn-Weather.apk" | awk '{print $1}' > "dist/Muninn-Weather.apk.md5"
+          echo "apk_path=dist/Muninn-Weather.apk" >> "$GITHUB_OUTPUT"
+          echo "apk_md5_path=dist/Muninn-Weather.apk.md5" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Muninn-Weather
+          path: |
+            ${{ steps.apk.outputs.apk_path }}
+            ${{ steps.apk.outputs.apk_md5_path }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -112,6 +141,8 @@ jobs:
           name: ${{ steps.version.outputs.next_tag }}
           generate_release_notes: true
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
-          files: ${{ steps.apk.outputs.apk_path }}
+          files: |
+            ${{ steps.apk.outputs.apk_path }}
+            ${{ steps.apk.outputs.apk_md5_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
