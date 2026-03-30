@@ -1,8 +1,15 @@
 package com.studiosleepygiraffe.muninnweather
 
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
+import android.text.InputType
+import android.net.Uri
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
+import android.content.Intent
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
@@ -33,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (storage.hasFullConfig()) {
-            WorkerScheduler.schedulePeriodic(this)
+            WorkerScheduler.schedulePeriodic(this, storage.getPollingIntervalMinutes())
         }
 
         binding.packetList.layoutManager = LinearLayoutManager(this)
@@ -45,6 +52,14 @@ class MainActivity : AppCompatActivity() {
         binding.configureButton.setOnClickListener {
             prefillConfig()
             showConfig()
+        }
+
+        binding.batteryOptButton.setOnClickListener {
+            requestBatteryOptimizationExemption()
+        }
+
+        binding.pollingIntervalButton.setOnClickListener {
+            showPollingIntervalDialog()
         }
 
         binding.continueButton.setOnClickListener {
@@ -74,7 +89,7 @@ class MainActivity : AppCompatActivity() {
 
             storage.saveEntityId(chosen.entityId)
             updateConfigStatus()
-            WorkerScheduler.schedulePeriodic(this)
+            WorkerScheduler.schedulePeriodic(this, storage.getPollingIntervalMinutes())
             WorkerScheduler.enqueueOneTime(this)
             showHome()
             refreshPackets()
@@ -132,6 +147,49 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.configStatusText.text = getString(R.string.config_status, entity)
         }
+    }
+
+    private fun requestBatteryOptimizationExemption() {
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        if (powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            Toast.makeText(this, getString(R.string.battery_optimization_already_ignored), Toast.LENGTH_LONG).show()
+            return
+        }
+        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        startActivity(intent)
+    }
+
+    private fun showPollingIntervalDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(storage.getPollingIntervalMinutes().toString())
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.polling_interval_title))
+            .setMessage(getString(R.string.polling_interval_message))
+            .setView(input)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
+                val raw = input.text?.toString()?.trim().orEmpty()
+                val minutes = raw.toIntOrNull()
+                if (minutes == null || minutes < 1 || minutes > 60) {
+                    Toast.makeText(this, getString(R.string.polling_interval_invalid), Toast.LENGTH_LONG).show()
+                    return@setPositiveButton
+                }
+                storage.savePollingIntervalMinutes(minutes)
+                if (storage.hasFullConfig()) {
+                    WorkerScheduler.schedulePeriodic(this, minutes)
+                }
+                if (minutes < WorkerScheduler.MIN_PERIODIC_MINUTES) {
+                    Toast.makeText(this, getString(R.string.polling_interval_min_applied, WorkerScheduler.MIN_PERIODIC_MINUTES), Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, getString(R.string.polling_interval_saved), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun loadSensors() {

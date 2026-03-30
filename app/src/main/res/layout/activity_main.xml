@@ -26,6 +26,20 @@
             android:layout_marginTop="8dp"
             android:text="@string/configure_ha" />
 
+        <Button
+            android:id="@+id/battery_opt_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ignore_battery_optimization" />
+
+        <Button
+            android:id="@+id/polling_interval_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/set_polling_interval" />
+
         <TextView
             android:id="@+id/config_status_text"
             android:layout_width="wrap_content"

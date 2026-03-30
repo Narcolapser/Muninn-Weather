@@ -48,6 +48,15 @@ class WeatherStorage(context: Context) {
 
     fun getEntityId(): String? = prefs.getString(KEY_ENTITY_ID, null)
 
+    fun savePollingIntervalMinutes(minutes: Int) {
+        prefs.edit()
+            .putInt(KEY_POLLING_INTERVAL_MINUTES, minutes)
+            .apply()
+    }
+
+    fun getPollingIntervalMinutes(): Int =
+        prefs.getInt(KEY_POLLING_INTERVAL_MINUTES, DEFAULT_POLLING_INTERVAL_MINUTES)
+
     fun appendPacket(packet: WeatherPacket) {
         val packets = getPackets().toMutableList()
         packets.add(0, packet)
@@ -88,6 +97,8 @@ class WeatherStorage(context: Context) {
         private const val KEY_HA_TOKEN = "ha_token"
         private const val KEY_ENTITY_ID = "entity_id"
         private const val KEY_PACKETS = "weather_packets"
+        private const val KEY_POLLING_INTERVAL_MINUTES = "polling_interval_minutes"
+        private const val DEFAULT_POLLING_INTERVAL_MINUTES = 15
         private const val MAX_PACKETS = 20
     }
 }

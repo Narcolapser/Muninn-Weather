@@ -3,6 +3,14 @@
     <string name="setup_title">Home Assistant Setup</string>
     <string name="home_title">Muninn-Weather</string>
     <string name="configure_ha">Configure Home Assistant</string>
+    <string name="ignore_battery_optimization">Allow background updates</string>
+    <string name="set_polling_interval">Set polling interval</string>
+    <string name="polling_interval_title">Polling interval</string>
+    <string name="polling_interval_message">Enter polling interval in minutes (1-60).</string>
+    <string name="polling_interval_saved">Polling interval saved.</string>
+    <string name="polling_interval_invalid">Enter a number from 1 to 60.</string>
+    <string name="polling_interval_min_applied">Android enforces a minimum of %1$d minutes for periodic work.</string>
+    <string name="battery_optimization_already_ignored">Background updates already allowed.</string>
     <string name="config_status">Configured sensor: %1$s</string>
     <string name="config_missing">No sensor selected yet.</string>
     <string name="ha_url_label">Home Assistant URL</string>

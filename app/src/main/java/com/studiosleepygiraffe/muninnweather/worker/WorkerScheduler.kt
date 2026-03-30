@@ -10,15 +10,17 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.NetworkType
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 object WorkerScheduler {
     private const val PERIODIC_NAME = "muninn_weather_periodic"
 
-    fun schedulePeriodic(context: Context) {
+    fun schedulePeriodic(context: Context, intervalMinutes: Int) {
+        val safeMinutes = max(MIN_PERIODIC_MINUTES, intervalMinutes)
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-        val request = PeriodicWorkRequestBuilder<WeatherWorker>(15, TimeUnit.MINUTES)
+        val request = PeriodicWorkRequestBuilder<WeatherWorker>(safeMinutes.toLong(), TimeUnit.MINUTES)
             .setConstraints(constraints)
             .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -42,4 +44,6 @@ object WorkerScheduler {
             request
         )
     }
+
+    const val MIN_PERIODIC_MINUTES = 15
 }
