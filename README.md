@@ -1,17 +1,14 @@
 # Muninn-Weather
 
-Muninn-Weather is a minimal Android app that polls Home Assistant for weather data and broadcasts it to Gadgetbridge for PineTime.
+Muninn-Weather is a minimal Android app that polls Home Assistant for weather data and broadcasts it to Gadgetbridge for PineTime. A simple app for a simple task.
 
 ## Setup
 
-1. Build and install the app on your phone.
-2. On first launch, enter your Home Assistant URL (HTTPS) and a long-lived access token.
+1. Download from Github under releases or use Obtanium.
+2. On open, click the "Configure Home Assistant" Button
+    1. Provide the URL for your Home Assistant instance and a long-lived access token.
+    2. Select a sensor to use as your temperature sensor. 
 3. The app schedules a background sync every 15 minutes and sends updates to Gadgetbridge.
-
-## Build and Run
-
-- Open the project in Android Studio and let Gradle sync.
-- Run the app on a device with Gadgetbridge installed.
 
 ## Docker Build
 
@@ -21,5 +18,4 @@ Muninn-Weather is a minimal Android app that polls Home Assistant for weather da
 
 ## Notes
 
-- Home Assistant entity: `sensor.roof_top_weather_station_temperature`
 - Gadgetbridge intent action: `nodomain.freeyourgadget.gadgetbridge.action.WEATHER`
