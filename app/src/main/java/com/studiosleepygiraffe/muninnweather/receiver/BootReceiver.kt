@@ -7,8 +7,9 @@ import com.studiosleepygiraffe.muninnweather.worker.WorkerScheduler
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            WorkerScheduler.schedulePeriodic(context)
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED -> WorkerScheduler.schedulePeriodic(context)
         }
     }
 }

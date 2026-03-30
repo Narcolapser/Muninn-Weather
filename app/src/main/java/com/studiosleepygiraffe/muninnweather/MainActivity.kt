@@ -32,6 +32,10 @@ class MainActivity : AppCompatActivity() {
             binding.useSensorButton.isEnabled = true
         }
 
+        if (storage.hasFullConfig()) {
+            WorkerScheduler.schedulePeriodic(this)
+        }
+
         binding.packetList.layoutManager = LinearLayoutManager(this)
         binding.packetList.adapter = adapter
 
