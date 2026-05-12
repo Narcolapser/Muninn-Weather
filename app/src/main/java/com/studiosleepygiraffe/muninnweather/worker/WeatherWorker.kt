@@ -34,17 +34,58 @@ class WeatherWorker(
         entityId: String
     ): WeatherPacket? {
         val homeLocale = storage.getHomeLocale()
-        val currentLocation = if (homeLocale == null) null else CoarseLocationProvider(applicationContext).getCurrentLocation()
-        if (homeLocale != null && currentLocation != null && isOutsideHomeLocale(currentLocation, homeLocale)) {
+        if (homeLocale == null) {
+            return HaClient().fetchPacket(config, entityId)
+        }
+
+        val locationProvider = CoarseLocationProvider(applicationContext)
+        val currentLocation = locationProvider.getCurrentLocation()
+        val stableLocation = currentLocation ?: storage.getCurrentLocale()?.toLocation()
+
+        if (currentLocation != null && !isOutsideHomeLocale(currentLocation, homeLocale)) {
+            storage.saveCurrentLocale(
+                WeatherStorage.CurrentLocale(
+                    name = homeLocale.name,
+                    latitude = currentLocation.latitude,
+                    longitude = currentLocation.longitude,
+                    timestampMillis = currentLocation.time.takeIf { it > 0L } ?: System.currentTimeMillis()
+                )
+            )
+        }
+
+        if (stableLocation != null && isOutsideHomeLocale(stableLocation, homeLocale)) {
             val meteoClient = OpenMeteoClient()
-            val locationName = meteoClient.reverseGeocode(currentLocation.latitude, currentLocation.longitude)
-                ?: "Current location"
-            val packet = meteoClient.fetchCurrent(currentLocation.latitude, currentLocation.longitude, locationName)
+            val cachedLocale = storage.getCurrentLocale()
+            val locationName = if (currentLocation == null && cachedLocale != null) {
+                cachedLocale.name
+            } else {
+                meteoClient.reverseGeocode(stableLocation.latitude, stableLocation.longitude)
+                    ?: cachedLocale?.name
+                    ?: "Current location"
+            }
+            if (currentLocation != null) {
+                storage.saveCurrentLocale(
+                    WeatherStorage.CurrentLocale(
+                        name = locationName,
+                        latitude = currentLocation.latitude,
+                        longitude = currentLocation.longitude,
+                        timestampMillis = currentLocation.time.takeIf { it > 0L } ?: System.currentTimeMillis()
+                    )
+                )
+            }
+            val packet = meteoClient.fetchCurrent(stableLocation.latitude, stableLocation.longitude, locationName)
             if (packet != null) return packet
         }
 
         return HaClient().fetchPacket(config, entityId)
     }
+
+    private fun WeatherStorage.CurrentLocale.toLocation(): Location =
+        Location("muninn_cached").also {
+            it.latitude = latitude
+            it.longitude = longitude
+            it.time = timestampMillis
+        }
 
     private fun isOutsideHomeLocale(
         currentLocation: Location,

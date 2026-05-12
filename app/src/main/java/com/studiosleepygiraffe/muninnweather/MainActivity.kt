@@ -1,6 +1,7 @@
 package com.studiosleepygiraffe.muninnweather
 
 import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
@@ -112,11 +113,16 @@ class MainActivity : AppCompatActivity() {
         showHome()
         updateConfigStatus()
         updateHomeLocaleStatus()
+        updateCurrentLocaleStatus()
+        if (storage.getHomeLocale() != null) {
+            requestCoarseLocationPermissionIfNeeded()
+        }
         refreshPackets()
     }
 
     override fun onResume() {
         super.onResume()
+        updateCurrentLocaleStatus()
         if (storage.hasFullConfig()) {
             refreshPackets()
         }
@@ -165,6 +171,15 @@ class MainActivity : AppCompatActivity() {
             binding.homeLocaleStatusText.text = getString(R.string.home_locale_missing)
         } else {
             binding.homeLocaleStatusText.text = getString(R.string.home_locale_status, homeLocale.name)
+        }
+    }
+
+    private fun updateCurrentLocaleStatus() {
+        val currentLocale = storage.getCurrentLocale()
+        if (currentLocale == null) {
+            binding.currentLocaleStatusText.text = getString(R.string.current_locale_unknown)
+        } else {
+            binding.currentLocaleStatusText.text = getString(R.string.current_locale_status, currentLocale.name)
         }
     }
 
@@ -256,10 +271,44 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestCoarseLocationPermissionIfNeeded() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            requestBackgroundLocationPermissionIfNeeded()
             return
         }
         Toast.makeText(this, getString(R.string.location_permission_needed), Toast.LENGTH_LONG).show()
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_COARSE_LOCATION)
+    }
+
+    private fun requestBackgroundLocationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+        Toast.makeText(this, getString(R.string.background_location_permission_needed), Toast.LENGTH_LONG).show()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+            return
+        }
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+            REQUEST_BACKGROUND_LOCATION
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_COARSE_LOCATION && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            requestBackgroundLocationPermissionIfNeeded()
+        }
     }
 
     private fun loadSensors() {
@@ -288,5 +337,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_COARSE_LOCATION = 1001
+        private const val REQUEST_BACKGROUND_LOCATION = 1002
     }
 }

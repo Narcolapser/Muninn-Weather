@@ -77,6 +77,28 @@ class WeatherStorage(context: Context) {
         )
     }
 
+    fun saveCurrentLocale(currentLocale: CurrentLocale) {
+        prefs.edit()
+            .putString(KEY_CURRENT_LOCALE_NAME, currentLocale.name)
+            .putFloat(KEY_CURRENT_LATITUDE, currentLocale.latitude.toFloat())
+            .putFloat(KEY_CURRENT_LONGITUDE, currentLocale.longitude.toFloat())
+            .putLong(KEY_CURRENT_LOCALE_TIMESTAMP, currentLocale.timestampMillis)
+            .apply()
+    }
+
+    fun getCurrentLocale(): CurrentLocale? {
+        val name = prefs.getString(KEY_CURRENT_LOCALE_NAME, null)
+        if (name.isNullOrBlank() || !prefs.contains(KEY_CURRENT_LATITUDE) || !prefs.contains(KEY_CURRENT_LONGITUDE)) {
+            return null
+        }
+        return CurrentLocale(
+            name = name,
+            latitude = prefs.getFloat(KEY_CURRENT_LATITUDE, 0f).toDouble(),
+            longitude = prefs.getFloat(KEY_CURRENT_LONGITUDE, 0f).toDouble(),
+            timestampMillis = prefs.getLong(KEY_CURRENT_LOCALE_TIMESTAMP, 0L)
+        )
+    }
+
     fun appendPacket(packet: WeatherPacket) {
         val packets = getPackets().toMutableList()
         packets.add(0, packet)
@@ -121,6 +143,12 @@ class WeatherStorage(context: Context) {
 
     data class HaConfig(val url: String, val token: String)
     data class HomeLocale(val name: String, val latitude: Double, val longitude: Double)
+    data class CurrentLocale(
+        val name: String,
+        val latitude: Double,
+        val longitude: Double,
+        val timestampMillis: Long
+    )
 
     companion object {
         private const val PREFS_NAME = "muninn_weather_prefs"
@@ -132,6 +160,10 @@ class WeatherStorage(context: Context) {
         private const val KEY_HOME_LOCALE_NAME = "home_locale_name"
         private const val KEY_HOME_LATITUDE = "home_latitude"
         private const val KEY_HOME_LONGITUDE = "home_longitude"
+        private const val KEY_CURRENT_LOCALE_NAME = "current_locale_name"
+        private const val KEY_CURRENT_LATITUDE = "current_latitude"
+        private const val KEY_CURRENT_LONGITUDE = "current_longitude"
+        private const val KEY_CURRENT_LOCALE_TIMESTAMP = "current_locale_timestamp"
         private const val DEFAULT_POLLING_INTERVAL_MINUTES = 15
         private const val MAX_PACKETS = 20
     }

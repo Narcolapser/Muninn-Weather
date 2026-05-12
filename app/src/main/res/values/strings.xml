@@ -13,7 +13,10 @@
     <string name="home_locale_failed">Could not find that locale.</string>
     <string name="home_locale_missing">No home locale set; always using Home Assistant.</string>
     <string name="home_locale_status">Home locale: %1$s</string>
+    <string name="current_locale_unknown">Current locale: unknown</string>
+    <string name="current_locale_status">Current locale: %1$s</string>
     <string name="location_permission_needed">Allow approximate location to use local weather while away.</string>
+    <string name="background_location_permission_needed">Allow location all the time so weather can update while the phone is locked.</string>
     <string name="polling_interval_title">Polling interval</string>
     <string name="polling_interval_message">Enter polling interval in minutes (1-60).</string>
     <string name="polling_interval_saved">Polling interval saved.</string>
