@@ -40,12 +40,27 @@
             android:layout_marginTop="8dp"
             android:text="@string/set_polling_interval" />
 
+        <Button
+            android:id="@+id/home_locale_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/set_home_locale" />
+
         <TextView
             android:id="@+id/config_status_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/config_missing"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
+
+        <TextView
+            android:id="@+id/home_locale_status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/home_locale_missing"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
 
         <LinearLayout

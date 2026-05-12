@@ -5,6 +5,15 @@
     <string name="configure_ha">Configure Home Assistant</string>
     <string name="ignore_battery_optimization">Allow background updates</string>
     <string name="set_polling_interval">Set polling interval</string>
+    <string name="set_home_locale">Set home locale</string>
+    <string name="home_locale_title">Home locale</string>
+    <string name="home_locale_message">Enter your home city or locale. Weather uses Home Assistant while you are near this location and Open-Meteo while you are away.</string>
+    <string name="home_locale_hint">City, state, or country</string>
+    <string name="home_locale_saved">Home locale saved: %1$s</string>
+    <string name="home_locale_failed">Could not find that locale.</string>
+    <string name="home_locale_missing">No home locale set; always using Home Assistant.</string>
+    <string name="home_locale_status">Home locale: %1$s</string>
+    <string name="location_permission_needed">Allow approximate location to use local weather while away.</string>
     <string name="polling_interval_title">Polling interval</string>
     <string name="polling_interval_message">Enter polling interval in minutes (1-60).</string>
     <string name="polling_interval_saved">Polling interval saved.</string>
@@ -30,4 +39,7 @@
     <string name="missing_config">Please enter a URL and API key.</string>
     <string name="https_required">HTTPS URL required.</string>
     <string name="recorded_at">Recorded %1$s</string>
+    <string name="packet_source">Source: %1$s · %2$s · %3$s</string>
+    <string name="source_home_assistant">Home Assistant</string>
+    <string name="source_weather_api">Open-Meteo</string>
 </resources>

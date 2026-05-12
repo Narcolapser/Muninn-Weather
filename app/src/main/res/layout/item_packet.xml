@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     android:background="@drawable/bg_pill"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="12dp">
 
     <TextView
@@ -19,6 +19,15 @@
         android:id="@+id/packet_temp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:textColor="@color/text_primary"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+    <TextView
+        android:id="@+id/packet_source"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/text_muted"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
 </LinearLayout>

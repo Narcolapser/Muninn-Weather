@@ -2,11 +2,14 @@ package com.studiosleepygiraffe.muninnweather.worker
 
 import android.content.Context
 import android.content.Intent
+import android.location.Location
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.studiosleepygiraffe.muninnweather.data.WeatherStorage
+import com.studiosleepygiraffe.muninnweather.data.WeatherPacket
 import com.studiosleepygiraffe.muninnweather.network.HaClient
+import com.studiosleepygiraffe.muninnweather.network.OpenMeteoClient
 import org.json.JSONObject
 
 class WeatherWorker(
@@ -18,23 +21,56 @@ class WeatherWorker(
         val storage = WeatherStorage(applicationContext)
         val config = storage.getConfig() ?: return Result.retry()
         val entityId = storage.getEntityId() ?: return Result.retry()
-        val packet = HaClient().fetchPacket(config, entityId) ?: return Result.retry()
+        val packet = fetchBestPacket(storage, config, entityId) ?: return Result.retry()
 
         storage.appendPacket(packet)
         sendToGadgetbridge(packet)
         return Result.success()
     }
 
-    private fun sendToGadgetbridge(packet: com.studiosleepygiraffe.muninnweather.data.WeatherPacket) {
+    private suspend fun fetchBestPacket(
+        storage: WeatherStorage,
+        config: WeatherStorage.HaConfig,
+        entityId: String
+    ): WeatherPacket? {
+        val homeLocale = storage.getHomeLocale()
+        val currentLocation = if (homeLocale == null) null else CoarseLocationProvider(applicationContext).getCurrentLocation()
+        if (homeLocale != null && currentLocation != null && isOutsideHomeLocale(currentLocation, homeLocale)) {
+            val meteoClient = OpenMeteoClient()
+            val locationName = meteoClient.reverseGeocode(currentLocation.latitude, currentLocation.longitude)
+                ?: "Current location"
+            val packet = meteoClient.fetchCurrent(currentLocation.latitude, currentLocation.longitude, locationName)
+            if (packet != null) return packet
+        }
+
+        return HaClient().fetchPacket(config, entityId)
+    }
+
+    private fun isOutsideHomeLocale(
+        currentLocation: Location,
+        homeLocale: WeatherStorage.HomeLocale
+    ): Boolean {
+        val results = FloatArray(1)
+        Location.distanceBetween(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            homeLocale.latitude,
+            homeLocale.longitude,
+            results
+        )
+        return results[0] > HOME_RADIUS_METERS
+    }
+
+    private fun sendToGadgetbridge(packet: WeatherPacket) {
         val tempKelvin = toKelvin(packet.temperature, packet.unit)
         val payload = JSONObject()
         payload.put("timestamp", (packet.timestampMillis / 1000).toInt())
-        payload.put("location", "Home Assistant")
+        payload.put("location", packet.locationName)
         payload.put("currentTemp", tempKelvin)
         payload.put("todayMinTemp", tempKelvin)
         payload.put("todayMaxTemp", tempKelvin)
-        payload.put("currentCondition", "Unknown")
-        payload.put("currentConditionCode", 800)
+        payload.put("currentCondition", packet.condition)
+        payload.put("currentConditionCode", packet.conditionCode)
         payload.put("currentHumidity", 50)
         val payloadString = payload.toString()
 
@@ -69,5 +105,6 @@ class WeatherWorker(
         private const val ACTION_GADGETBRIDGE_WEATHER = "nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER"
         private const val GADGETBRIDGE_PACKAGE = "nodomain.freeyourgadget.gadgetbridge"
         private const val EXTRA_WEATHER_JSON = "WeatherJson"
+        private const val HOME_RADIUS_METERS = 25_000f
     }
 }

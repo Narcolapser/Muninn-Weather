@@ -57,6 +57,26 @@ class WeatherStorage(context: Context) {
     fun getPollingIntervalMinutes(): Int =
         prefs.getInt(KEY_POLLING_INTERVAL_MINUTES, DEFAULT_POLLING_INTERVAL_MINUTES)
 
+    fun saveHomeLocale(homeLocale: HomeLocale) {
+        prefs.edit()
+            .putString(KEY_HOME_LOCALE_NAME, homeLocale.name)
+            .putFloat(KEY_HOME_LATITUDE, homeLocale.latitude.toFloat())
+            .putFloat(KEY_HOME_LONGITUDE, homeLocale.longitude.toFloat())
+            .apply()
+    }
+
+    fun getHomeLocale(): HomeLocale? {
+        val name = prefs.getString(KEY_HOME_LOCALE_NAME, null)
+        if (name.isNullOrBlank() || !prefs.contains(KEY_HOME_LATITUDE) || !prefs.contains(KEY_HOME_LONGITUDE)) {
+            return null
+        }
+        return HomeLocale(
+            name = name,
+            latitude = prefs.getFloat(KEY_HOME_LATITUDE, 0f).toDouble(),
+            longitude = prefs.getFloat(KEY_HOME_LONGITUDE, 0f).toDouble()
+        )
+    }
+
     fun appendPacket(packet: WeatherPacket) {
         val packets = getPackets().toMutableList()
         packets.add(0, packet)
@@ -67,6 +87,10 @@ class WeatherStorage(context: Context) {
             json.put("timestampMillis", item.timestampMillis)
             json.put("temperature", item.temperature)
             json.put("unit", item.unit)
+            json.put("source", item.source.name)
+            json.put("condition", item.condition)
+            json.put("conditionCode", item.conditionCode)
+            json.put("locationName", item.locationName)
             array.put(json)
         }
         prefs.edit().putString(KEY_PACKETS, array.toString()).apply()
@@ -82,7 +106,13 @@ class WeatherStorage(context: Context) {
                 WeatherPacket(
                     timestampMillis = obj.optLong("timestampMillis"),
                     temperature = obj.optDouble("temperature"),
-                    unit = obj.optString("unit")
+                    unit = obj.optString("unit"),
+                    source = runCatching {
+                        WeatherSource.valueOf(obj.optString("source", WeatherSource.HOME_ASSISTANT.name))
+                    }.getOrDefault(WeatherSource.HOME_ASSISTANT),
+                    condition = obj.optString("condition", "Unknown"),
+                    conditionCode = obj.optInt("conditionCode", 800),
+                    locationName = obj.optString("locationName", "Home Assistant")
                 )
             )
         }
@@ -90,6 +120,7 @@ class WeatherStorage(context: Context) {
     }
 
     data class HaConfig(val url: String, val token: String)
+    data class HomeLocale(val name: String, val latitude: Double, val longitude: Double)
 
     companion object {
         private const val PREFS_NAME = "muninn_weather_prefs"
@@ -98,6 +129,9 @@ class WeatherStorage(context: Context) {
         private const val KEY_ENTITY_ID = "entity_id"
         private const val KEY_PACKETS = "weather_packets"
         private const val KEY_POLLING_INTERVAL_MINUTES = "polling_interval_minutes"
+        private const val KEY_HOME_LOCALE_NAME = "home_locale_name"
+        private const val KEY_HOME_LATITUDE = "home_latitude"
+        private const val KEY_HOME_LONGITUDE = "home_longitude"
         private const val DEFAULT_POLLING_INTERVAL_MINUTES = 15
         private const val MAX_PACKETS = 20
     }

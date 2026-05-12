@@ -1,5 +1,6 @@
 package com.studiosleepygiraffe.muninnweather
 
+import android.Manifest
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
@@ -9,14 +10,18 @@ import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.studiosleepygiraffe.muninnweather.data.WeatherStorage
 import com.studiosleepygiraffe.muninnweather.databinding.ActivityMainBinding
 import com.studiosleepygiraffe.muninnweather.network.HaClient
+import com.studiosleepygiraffe.muninnweather.network.OpenMeteoClient
 import com.studiosleepygiraffe.muninnweather.worker.WorkerScheduler
 import kotlinx.coroutines.launch
 
@@ -62,6 +67,10 @@ class MainActivity : AppCompatActivity() {
             showPollingIntervalDialog()
         }
 
+        binding.homeLocaleButton.setOnClickListener {
+            showHomeLocaleDialog()
+        }
+
         binding.continueButton.setOnClickListener {
             val rawUrl = binding.haUrlInput.text?.toString()?.trim().orEmpty()
             val token = binding.haKeyInput.text?.toString()?.trim().orEmpty()
@@ -102,6 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         showHome()
         updateConfigStatus()
+        updateHomeLocaleStatus()
         refreshPackets()
     }
 
@@ -149,6 +159,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateHomeLocaleStatus() {
+        val homeLocale = storage.getHomeLocale()
+        if (homeLocale == null) {
+            binding.homeLocaleStatusText.text = getString(R.string.home_locale_missing)
+        } else {
+            binding.homeLocaleStatusText.text = getString(R.string.home_locale_status, homeLocale.name)
+        }
+    }
+
     private fun requestBatteryOptimizationExemption() {
         val powerManager = getSystemService(POWER_SERVICE) as PowerManager
         if (powerManager.isIgnoringBatteryOptimizations(packageName)) {
@@ -192,6 +211,57 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun showHomeLocaleDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            hint = getString(R.string.home_locale_hint)
+            setText(storage.getHomeLocale()?.name.orEmpty())
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.home_locale_title))
+            .setMessage(getString(R.string.home_locale_message))
+            .setView(input)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
+                val query = input.text?.toString()?.trim().orEmpty()
+                if (query.isBlank()) {
+                    Toast.makeText(this, getString(R.string.home_locale_failed), Toast.LENGTH_LONG).show()
+                    return@setPositiveButton
+                }
+                saveHomeLocale(query)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun saveHomeLocale(query: String) {
+        lifecycleScope.launch {
+            val result = OpenMeteoClient().geocode(query)
+            if (result == null) {
+                Toast.makeText(this@MainActivity, getString(R.string.home_locale_failed), Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            storage.saveHomeLocale(
+                WeatherStorage.HomeLocale(
+                    name = result.name,
+                    latitude = result.latitude,
+                    longitude = result.longitude
+                )
+            )
+            updateHomeLocaleStatus()
+            requestCoarseLocationPermissionIfNeeded()
+            Toast.makeText(this@MainActivity, getString(R.string.home_locale_saved, result.name), Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun requestCoarseLocationPermissionIfNeeded() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+        Toast.makeText(this, getString(R.string.location_permission_needed), Toast.LENGTH_LONG).show()
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_COARSE_LOCATION)
+    }
+
     private fun loadSensors() {
         selectedSensor = null
         binding.useSensorButton.isEnabled = false
@@ -214,5 +284,9 @@ class MainActivity : AppCompatActivity() {
             binding.useSensorButton.text = getString(R.string.use_sensor)
             showSensors()
         }
+    }
+
+    companion object {
+        private const val REQUEST_COARSE_LOCATION = 1001
     }
 }
