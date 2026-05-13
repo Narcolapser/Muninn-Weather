@@ -103,8 +103,23 @@ class WeatherStorage(context: Context) {
         val packets = getPackets().toMutableList()
         packets.add(0, packet)
         val trimmed = packets.take(MAX_PACKETS)
+        savePackets(trimmed)
+    }
+
+    fun replaceCurrentLocationPacketNames(locationName: String) {
+        val updated = getPackets().map { packet ->
+            if (packet.locationName == CURRENT_LOCATION_PLACEHOLDER) {
+                packet.copy(locationName = locationName)
+            } else {
+                packet
+            }
+        }
+        savePackets(updated)
+    }
+
+    private fun savePackets(packets: List<WeatherPacket>) {
         val array = JSONArray()
-        for (item in trimmed) {
+        for (item in packets) {
             val json = JSONObject()
             json.put("timestampMillis", item.timestampMillis)
             json.put("temperature", item.temperature)
@@ -166,5 +181,6 @@ class WeatherStorage(context: Context) {
         private const val KEY_CURRENT_LOCALE_TIMESTAMP = "current_locale_timestamp"
         private const val DEFAULT_POLLING_INTERVAL_MINUTES = 15
         private const val MAX_PACKETS = 20
+        const val CURRENT_LOCATION_PLACEHOLDER = "Current location"
     }
 }

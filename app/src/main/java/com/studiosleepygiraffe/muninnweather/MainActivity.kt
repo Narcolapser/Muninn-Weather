@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.studiosleepygiraffe.muninnweather.data.WeatherStorage
 import com.studiosleepygiraffe.muninnweather.databinding.ActivityMainBinding
 import com.studiosleepygiraffe.muninnweather.network.HaClient
+import com.studiosleepygiraffe.muninnweather.network.LocationNameResolver
 import com.studiosleepygiraffe.muninnweather.network.OpenMeteoClient
 import com.studiosleepygiraffe.muninnweather.worker.WorkerScheduler
 import kotlinx.coroutines.launch
@@ -126,6 +127,7 @@ class MainActivity : AppCompatActivity() {
         if (storage.hasFullConfig()) {
             refreshPackets()
         }
+        repairCurrentLocaleNameIfNeeded()
     }
 
     private fun refreshPackets() {
@@ -180,6 +182,24 @@ class MainActivity : AppCompatActivity() {
             binding.currentLocaleStatusText.text = getString(R.string.current_locale_unknown)
         } else {
             binding.currentLocaleStatusText.text = getString(R.string.current_locale_status, currentLocale.name)
+        }
+    }
+
+    private fun repairCurrentLocaleNameIfNeeded() {
+        val currentLocale = storage.getCurrentLocale() ?: return
+        if (currentLocale.name != WeatherStorage.CURRENT_LOCATION_PLACEHOLDER) {
+            storage.replaceCurrentLocationPacketNames(currentLocale.name)
+            refreshPackets()
+            return
+        }
+        lifecycleScope.launch {
+            val locationName = LocationNameResolver(this@MainActivity)
+                .resolve(currentLocale.latitude, currentLocale.longitude)
+                ?: return@launch
+            storage.saveCurrentLocale(currentLocale.copy(name = locationName))
+            storage.replaceCurrentLocationPacketNames(locationName)
+            updateCurrentLocaleStatus()
+            refreshPackets()
         }
     }
 

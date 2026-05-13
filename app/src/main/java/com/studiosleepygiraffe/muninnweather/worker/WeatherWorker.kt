@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import com.studiosleepygiraffe.muninnweather.data.WeatherStorage
 import com.studiosleepygiraffe.muninnweather.data.WeatherPacket
 import com.studiosleepygiraffe.muninnweather.network.HaClient
+import com.studiosleepygiraffe.muninnweather.network.LocationNameResolver
 import com.studiosleepygiraffe.muninnweather.network.OpenMeteoClient
 import org.json.JSONObject
 
@@ -56,12 +57,13 @@ class WeatherWorker(
         if (stableLocation != null && isOutsideHomeLocale(stableLocation, homeLocale)) {
             val meteoClient = OpenMeteoClient()
             val cachedLocale = storage.getCurrentLocale()
-            val locationName = if (currentLocation == null && cachedLocale != null) {
-                cachedLocale.name
+            val cachedName = cachedLocale?.name?.takeUnless { it == WeatherStorage.CURRENT_LOCATION_PLACEHOLDER }
+            val locationName = if (currentLocation == null && cachedName != null) {
+                cachedName
             } else {
-                meteoClient.reverseGeocode(stableLocation.latitude, stableLocation.longitude)
-                    ?: cachedLocale?.name
-                    ?: "Current location"
+                LocationNameResolver(applicationContext).resolve(stableLocation.latitude, stableLocation.longitude)
+                    ?: cachedName
+                    ?: WeatherStorage.CURRENT_LOCATION_PLACEHOLDER
             }
             if (currentLocation != null) {
                 storage.saveCurrentLocale(
@@ -74,6 +76,9 @@ class WeatherWorker(
                 )
             }
             val packet = meteoClient.fetchCurrent(stableLocation.latitude, stableLocation.longitude, locationName)
+            if (locationName != WeatherStorage.CURRENT_LOCATION_PLACEHOLDER) {
+                storage.replaceCurrentLocationPacketNames(locationName)
+            }
             if (packet != null) return packet
         }
 
